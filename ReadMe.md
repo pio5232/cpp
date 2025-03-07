@@ -87,4 +87,92 @@
   - this 포인터를 이용해 **Self-Reference (자기 자신의 참조자)**를 반환할 수 있다.
 
 --- 
+- C++ 스타일의 초기화
+  - 다음과 같은 방식으로 변수와 참조자를 선언 및 초기화가 가능하다
+    - int num = 20; => int num(20);
+    - int &ref = num; => int &ref(num); 
 ## 5. 복사 생성자
+- explicit 키워드를 통해 암묵적 형변환을 제한할 수 있음 
+```cpp
+class MyClass
+{
+private:
+	int num1;
+	int num2;
+public:
+	explicit MyClass(int n1, int n2) : num1(n1), num2(n2) {}
+	explicit MyClass(MyClass& copy) : num1(copy.num1), num2(copy.num2){}
+}
+
+MyClass my = {10,20}; 
+// explicit 키워드 없이는 암묵적으로 MyClass My(10,20)으로 변환되어 성공적으로 수행된다.
+
+MyClass my2 = my
+// 이것도 마찬가지로 explicit 키워드 없이는 MyClass my2(my)로 암묵적인 변환이 일어나 수행된다.
+
+//생성자에 explicit 키워드가 존재하면 이런 암묵적인 변환에 의한 초기화를 막는다.
+```
+###  **explicit 키워드의 사용은 코드의 명학함을 더하기 위해 자주 사용된다.**
+<br></br>
+
+- 복사 생성자 또는 대입 연산자를 이용할 때는 포인터 멤버에 대해서 **깊은 복사 / 얕은 복사 처리를 주의**
+- 복사 생성자의 호출 시점
+  - 1. 기존 생성된 객체를 이용해서 생성되 객체를 초기화하는 경우
+  - 2. 함수에 참조가 아닌 Call-by-value 형식으로 객체를 전달하는 경우
+  - 3. 함수의 리턴이 참조가 아닌 객체를 반환하는 경우.
+
+- 임시 객체
+  - 말 그대로 임시로 생성되는 객체 (함수에서 객체를 참조가 아닌 형태로 반환 / 인자로 받을 때에도 생성됨)
+  - const Temp& ref = 객체반환함수 를 했을 때
+    - 반환 함수에서는 객체를 만들고 그대로 자신의 포인터를 반환
+    - 이렇게 참조자에 사용된 임시 객체는 바로 소멸하지 않고, 참조자의 생명 주기에 맞춰서 소멸된다.
+    - **const & 참조로 받기 때문에 임시 객체의 수명이 연장된다.**
+---
+## 6. friend와 static 그리고 const
+- const 객체와 const 객체의 특성
+  - const 객체도 마찬가지로 존재.
+    - 멤버 변수의 변경을 허용하지 않는다.
+    - const 함수만 호출 가능
+
+- friend 클래스
+  - A클래스에서 friend class B 선언 => B클래스에서는 A클래스에 접근을 할 수 있다.
+  - 함수의 friend 선언
+    - A 클래스 , B 클래스 존재
+    - B 클래스에서 A 클래스의 함수에 대해서 friend 선언
+  ```CPP
+  class A
+  {
+  public:
+     void Add(const B& b1,const B& b2);
+  }
+
+  class B
+  {
+  private:
+    int x;
+    int y;
+  public:
+    friend void B::Add(const B& b1, const B& b2);
+  }
+
+  => A의 Add 함수에서는 B의 x,y멤버에 접근이 가능하다. 
+  ```
+  - friend 선언 ? 웬만하면 사용하지 말도록 하자. (정보 은닉을 무너뜨리는 문법)
+
+- C++에서의 static
+  - 기존 C의 static
+    - static 전역 변수
+      - 선언된 cpp에서의 참조만 허용하겠다.
+    - 함수 내에 선언된 static
+      - 한 번먼 초기화되고, 지역변수와 달리 함수를 빠져나가도 소멸되지 않는다. 
+      - 전역 변수와 마찬가지로 초기화하지 않으면 0으로 초기화된다.
+  - static 멤버 변수
+    - 메모리 할당 시점은 전역 변수와 같으나,처음 사용될 때 초기화된다.
+    - 헤더에 static 멤버를 선언했다면 cpp에서 Class::Static 멤버를 통해 따로 초기화 값을 정의해주도록 해야한다.
+  - static 멤버 함수
+  - const static 멤버
+    - static 멤버의 초기화는 이니셜라이즈를 해야하지만 **const static 멤버의 초기화는 선언과 동시**에 하는 것이 가능하다.
+
+- mutable 키워드
+  - 이 키워드가 붙은 멤버 변수는 **const 함수 내에서의 값 변경을 예외적으로 허락**한다.
+  - mutable은 아주 제한적으로, 예외적인 경우에 한해서만 사용하는 키워드이다.
