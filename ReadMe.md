@@ -176,3 +176,59 @@ MyClass my2 = my
 - mutable 키워드
   - 이 키워드가 붙은 멤버 변수는 **const 함수 내에서의 값 변경을 예외적으로 허락**한다.
   - mutable은 아주 제한적으로, 예외적인 경우에 한해서만 사용하는 키워드이다.
+---
+## 7. 상속 (Inheritance)
+- Base 클래스와 Derived 클래스의 생성자 / 소멸자 호출 
+  - https://velog.io/@jhmv7mp/s
+- public / protected / priavte 상속
+  - Derived 클래스는 Base 클래스의 멤버를 접근 제한자 형태로 상속받아서 가지겠다! 라는 의미
+  ```CPP
+  class Base
+  {
+    private:
+        int x;
+    protected:
+        int y;
+    public:
+        int z;
+  }
+
+  class Derived : private Base
+  => 
+  class Derived 
+  {
+      // x는 Base의 private => 접근 불가
+      // y는 private y;의 형태 => 접근 가능
+      // z는 private z;의 형태 => 접근 가능
+  }
+
+  class Derived2 : protected Base
+  {
+     // x는 Base의 private => 접근 불가
+     // y는 protected y;의 형태 => 접근 가능
+     // z는 protected z;의 형태 => 접근 가능
+  }
+
+  class DDerived2 : public Derived
+  {
+     // DDerived2는 private x, protected y, protected z를 상속
+     // x는 Base의 private => 접근 불가
+     // y는 protected y;의 형태 -> 접근 가능 
+     // z는 protected z;의 형태 -> 접근 가능.
+  }
+
+  // 만약 
+  class DDerived3: private Derived
+  {
+     // 로 받았더라도 
+     // x는 Base의 private => 접근 불가
+     // y는 자신의 private y;의 형태 -> 접근 가능 
+     // z는 자신의 private z;의 형태 -> 접근 가능.
+  }
+  // 으로 DDerived3을 다음에 상속받는 클래스는 모든 멤버를 사용할 수 없다. (어떻게 받든 이미 모든 멤버가 private형태이기 때문에)
+
+
+  ```
+
+  ---
+  ## 8.상속과 다형성
