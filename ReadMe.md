@@ -256,3 +256,43 @@ MyClass my2 = my
   - Base* b = new Derived()와 같이
     - Derived d; <br/>Base& rb = d; 로도 사용할 수 있으며 사용법은 동일하다.
 
+---
+## 9. 가상 (virtual)의 원리와 다중 상속
+- 멤버 함수의 실행
+```cpp
+#include <iostream>
+using namespace std;
+
+typedef struct Data
+{
+	int data;
+	void (*ShowData)(Data*);
+	void (*Add)(Data*, int);
+} Data;
+
+void ShowData(Data* THIS) { cout << "Data : " << THIS->data << endl; }
+void Add(Data* THIS, int num) { THIS->data += num; }
+
+int main()
+{
+	Data obj1 = { 15, ShowData, Add };
+	Data obj2 = { 7, ShowData, Add };
+
+	obj1.Add(&obj1, 17);
+	obj2.Add(&obj2, 9);
+
+	obj1.ShowData(&obj1);
+	obj2.ShowData(&obj2);
+
+	return 0;
+}
+```
+이와 같이 멤버 함수는 객체들이 공유하는 형태
+
+- 가상 함수의 동작 원리와 가상함수 테이블
+  - https://velog.io/@jhmv7mp/s
+
+- 다중 상속의 문제
+  - 두 기초 클래스에 동일한 이름의 멤버가 존재하는 경우  
+    - 가상 상속을 통해 해결
+      - 가상 상속을 통해 겹치는 멤버 변수 / 멤버 함수 등에 대한 상속을 1번으로 하게끔 한다.
