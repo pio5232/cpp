@@ -152,10 +152,11 @@ MyClass my2 = my
     int x;
     int y;
   public:
-    friend void B::Add(const B& b1, const B& b2);
-  }
-
+    friend void A::Add(const B& b1, const B& b2);
+  };
   => A의 Add 함수에서는 B의 x,y멤버에 접근이 가능하다. 
+  // 어떤 클래스에서 friend ~ 선언 : some 클래스 / 함수 에서 내 정보를 사용하는 것을 허락할게~~ 라고 생각
+
   ```
   - friend 선언 ? 웬만하면 사용하지 말도록 하자. (정보 은닉을 무너뜨리는 문법)
 
@@ -296,3 +297,73 @@ int main()
   - 두 기초 클래스에 동일한 이름의 멤버가 존재하는 경우  
     - 가상 상속을 통해 해결
       - 가상 상속을 통해 겹치는 멤버 변수 / 멤버 함수 등에 대한 상속을 1번으로 하게끔 한다.
+
+
+---
+## 10. 연산자 오버로딩
+- 'operator' 키워드와 '연산자' 를 묶어서 함수 이름을 정의하면 **함수 이름을 이용한 호출 / 연산자를 이용한 호출** 2가지를 허용
+-  똑같은 대상에 대해서 연산자 오버로딩을 했을 때 
+   -  전역 함수 / 멤버 함수에 연산자 오버로딩을 했을 때 멤버 함수에서 오버로딩된 연산자가 먼저 호출된다.
+   
+- 단항 연산자 오버로딩 (++, --)
+  - 전위 operator++() / 후위 operator++(int)
+  - 전위에서 객체 자신의 참조자를 반환하는 이유 -> **연속된 형태의 연산이 가능하게 하기 위해서 ex) ++(++my)**
+
+- 반환 형에서 const 선언과 const 객체
+```cpp
+class Point
+{
+  private:
+  int xpos;
+  int ypos;
+  ...
+  const Point operator++(int)
+	{
+		const Point retobj(xpos, ypos);
+		xpos += 1;
+		ypos += 1;
+		return retobj;
+	}
+}
+
+// 함수가 반환될 때는 어차피 복사되기 때문에 의미가 없음
+
+Point point(10,20);
+(point++)++; 
+// 문법적으로 cosnt 객체를 반환 => 위 코드와 같은 형태의 코드의 실행을 막기 위해서.
+```
+
+- 교환 법칙 성립을 위한 구현
+  - 멤버 함수 형태로 정의하는 것은 객체가 왼쪽에 오는 버전 1개다. => 다른 1개는 전역 함수 형태로 구현하도록 한다.
+
+```cpp
+class Point
+{
+private:
+	int xpos, ypos;
+public:
+	Point(int x = 0, int y = 0) :xpos(x), ypos(y)
+	{
+
+	}
+
+	void ShowPosition() const
+	{
+		cout << '[' << xpos << ", " << ypos << ']' << endl;
+	}
+
+	Point operator*(int times)
+	{
+		Point pos(xpos * times, ypos * times);
+		return pos;
+	}
+
+};
+
+Point operator*(int times, Point& ref)
+{
+	return ref * times; 
+  // times * ref 로 변경하면 이 함수의 무한 호출 => 스택 오버플로우가 발생한다.
+}
+```
+
