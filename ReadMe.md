@@ -366,4 +366,247 @@ Point operator*(int times, Point& ref)
   // times * ref 로 변경하면 이 함수의 무한 호출 => 스택 오버플로우가 발생한다.
 }
 ```
+## 연산자 오버로딩 2
 
+- default 대입 연산자의 문제점
+```cpp
+class Test
+{
+  private: 
+      char * name;
+  public:
+      Test(const char* tName)
+      {
+          int len = strlen(tName) + 1;
+          name = new char[len];
+          strcpy(name, tName);
+      }
+      ~Test()
+      {
+        delete[] name;
+      }
+}
+
+int main()
+{
+	Person man1("aaa");
+	Person man2("bbb");
+
+  man1 = man2;
+	return 0;
+}
+```
+    - 문제 1. man2가 가지고 있던 포인터는 해제할 수 없는 상황이 됨 (man2의 name은 man1의 name과 동일한 대상을 가리키고 있음)
+    - 문제 2. 해제 시점에 man1에서 delete, man2에서 delete => double free에러가 발생.
+    
+
+- 상속 구조에서의 대입 연산자 호출
+  - Base / Derived 클래스에서 대입 연산자를 호출할 때
+```cpp
+class Base
+{
+  public:
+    Base& operator=(const Base& other)
+    {
+        cout << "Base operator=() \n";
+        reutrn *this;
+    }
+}
+
+class Derived : public Base
+{
+  public:
+  Derived& operator=(const Derived& other)
+  {
+      // Derived의 operator를 정의한 상태에서 Base의 operator를 호출하고 싶다면
+      Base::operator=(other);
+
+      cout << "Derived operator=() \n";
+      return *this;
+  }
+}
+
+int main()
+{
+  Derived d1,d2;
+  ...
+  d1 = d2;
+  
+  // Derived operator=를 정의하지 않음 => Base operator= 실행
+  // Derived operator=를 정의         => Derived operator= 실행
+  
+}
+```
+
+- 이니셜라이저는 성능 향상을 위해 도움을 준다.
+  - 위에서 말한 바와 같다.
+  - 객체 초기화
+    - 멤버 초기화 이니셜라이저를 통하면 **생성과 동시에 초기화**를 한다.
+    - {}안에서 초기화를 하는 것은 **생성 + 대입** 2가지 작업이 진행된다.
+```cpp
+#include <iostream>
+using namespace std;
+
+class AAA
+{
+private:
+	int num;
+public:
+	AAA(int n = 0) : num(n)
+	{
+		cout << "AAA(int n = 0)" << endl;
+	}
+	AAA(const AAA& ref) : num(ref.num)
+	{
+		cout << "AAA(const AAA& ref)" << endl;
+	}
+	AAA& operator=(const AAA& ref)
+	{
+		num = ref.num;
+		cout << "operator= (const AAA& ref) " << endl;
+		return *this;
+	}
+};
+
+class BBB
+{
+private:
+	AAA mem;
+public:
+	BBB(const AAA& ref) : mem(ref) {}
+};
+
+class CCC
+{
+private:
+	AAA mem;
+public:
+	CCC(const AAA& ref) { mem = ref; }
+};
+
+int main()
+{
+	AAA obj1(12);
+	cout << "***********************" << endl;
+	BBB obj2(obj1);
+	cout << "***********************" << endl;
+	CCC obj3(obj1);
+
+	return 0;
+}
+```
+
+- 배열의 인덱스 연산자 오버로딩
+  - operatr[] 를 오버로딩하여서 사용한다.
+  
+
+- new / delete 오버로딩
+  - new 
+    - 오버로딩된 new 연산자는 기본 new 연산자의 모든 부분을 대체하지 않음
+      - 1. **메모리 할당 -----------------------------> 이 부분만 오버로딩 가능**
+      - 2. 생성자 호출  
+      - 3. 자료형에 맞게 주소 값의 형 변환 
+      - 2번과 3번에 대한 진행은 컴파일러가 알아서 진행하도록 만들어놓는다..
+
+  - delete
+    - delete 도 마찬가지로 메모리 해제하는 부분만 오버로딩
+    -  1. **소멸자 호출 ------- 이 부분만 오버로딩**
+    -  2. 메모리 해제 => 컴파일러가 진행
+  
+
+  - new / delete는 static 함수
+    - **멤버 함수로 선언 => 그 클래스 객체에 대해서만 오버로딩된 new를 호출**
+  
+  - 기본적인 new / delete 함수
+    - void* operate new (size_t size)
+    - void* operate new[] (size_t size)
+    - void delete (void* ptr)
+    - void delete[] (void* ptr)
+
+- 포인터 연산자 오버로딩 ( * , -> )
+  - 둘 다 피연산자가 하나인 단항 연산자의 형태
+  - *는 객체 자신을 반환하는 형태로
+  - ->는 객체 자신의 포인터를 반환하는 형태로!
+
+
+- ()연산자 오버로딩과 펑터(Functor)
+  - 객체를 함수처럼 사용
+  - 왜 이걸 사용 ?
+    - 객체 또는 함수의 동작 방식에 유연함을 제공할 때 주로 사용된다.
+    - (알고리즘에서 정렬 방식을 정한다든가..)
+
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Point
+{
+private:
+	int xpos, ypos;
+public:
+	Point(int x = 0, int y = 0) :xpos(x), ypos(y)
+	{
+	}
+
+	Point operator+(const Point& point) const
+	{
+		return Point(xpos + point.xpos, ypos + point.ypos);
+	}
+	friend ostream& operator<<(ostream& os, const Point& pos);
+};
+
+ostream& operator<< (ostream& os, const Point& pos)
+{
+	os << '[' << pos.xpos << ", " << pos.ypos << ']' << endl;
+	return os;
+}
+
+class Adder
+{
+public:
+	int operator() (const int& n1, const int& n2)
+	{
+		return n1 + n2;
+	}
+
+	double operator()(const double& e1, const double& e2)
+	{
+		return e1 + e2;
+	}
+
+	Point operator()(const Point& pos1, const Point& pos2)
+	{
+		return pos1 + pos2;
+	}
+};
+int main()
+{
+	Adder adder;
+	cout << adder(1, 3) << endl;
+	cout << adder(1.5, 3.8) << endl;
+	cout << adder(Point(3,4), Point(7,9)) << endl;
+}
+```
+
+- 형 변환 연산자
+  - operator type () { 구현 }
+```cpp
+class Number
+{
+private:
+	int num;
+public:
+	operator int()
+	{
+		return num;  // -> 반환값 형식은 맞춰줘야한다.
+	}
+};
+
+int main()
+{
+	Number num1;
+	Number num2 = num1 + 20; => // num1이 int형으로 변환-> Number num2 = 50과 동일
+	return 0;
+}
+```
