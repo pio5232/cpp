@@ -612,3 +612,129 @@ int main()
 ```
 ---
 ## 13. Template
+- 템플릿으로 정의된 함수는 **컴파일 타임**에 컴파일러가 각 타입의 함수를 만든다.
+- 함수 템플릿과 템플릿 함수
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T>
+T add(T num1, T num2)   // ------- 함수의 원형을 정의 -> 함수 템플릿
+{
+	return num1 + num2;
+}
+
+// main에서 add<int>, add<double> 의 함수가 다음과 같이 생성이 된다
+// int add(int num1, int num2) {return num1 + num2;}
+// double add(double num1, double num2) {return num1 + num2;}
+// 이렇게 템플릿 기반으로 만들어진 함수를 템플릿 함수라고 한다.
+
+int main()
+{
+	cout << add<int>(15, 20) << endl;
+	cout << add<double>(2.9, 3.7) << endl;
+	cout << add<int>(3.2, 3.2) << endl;
+	cout << add<double>(3.14,2.75) << endl;
+
+	return 0;
+}
+
+```
+
+- 또한 이름이 같은 template 함수와 일반 함수는 함께 존재할 수 있지만
+실행 순서는 일반 함수 > template 함수이다.
+
+```cpp
+template <typename T>
+T add(T num1, T num2)
+{
+	cout << "T add()\n";
+	return num1 + num2;
+}
+
+int add(int num1, int num2)
+{
+	cout << "int add()\n";
+	return num1 + num2;
+}
+
+double add(double num1, double num2) 
+{
+	cout << "double add()\n";
+	return num1 + num2;
+}
+
+
+int main()
+{
+	cout << add(15, 20) << endl;   // --- int add()
+	cout << add(2.9, 3.7) << endl; // --- double add()
+	cout << add<int>(3.2, 3.2) << endl; // --- template<int>
+	cout << add<double>(3.14, 2.75) << endl; // --- template<double>
+
+	return 0;
+}
+```
+
+- 함수 템플릿 특수화
+  - template <> 형태로 사용
+- 클래스 템플릿의 특수화
+```cpp
+기본 template 클래스
+template <typename T>
+class c
+
+// ------------------------------------------- 클래스 템플릿의 특수화  --------------------
+template <>
+class c<type>
+
+// ------------------------------------------- 템플릿의 부분 특수화    --------------------
+template<typename T>
+class c<T, int> // int는 고정
+
+// ------------------------------------------- 템플릿 인자             --------------------
+ 템플릿의 매개변수에는 변수의 선언이 올 수 있으며, 디폴트 값으로도 지정이 가능하다.
+
+template<typename T = int, int len = 7>
+class c
+{
+  private: T arr[len];
+  ...
+}
+
+c<> myclass; // ==> 이 코드는 c<int, 7> myclass와 동일하다.
+
+
+=> 이렇게 만들면 c<int, 5>와 c<int, 7> 은 다른 타입이 되기 때문에
+대입 및 복사에 대한 부분은 신경 쓸 필요가 없음, 불필요한 코드가 없어도 된다.
+
+
+
+// ------------------------------------------- 템플릿의 static 변수     --------------------
+
+- template 클래스의 static
+  - static 지역 변수 / static 멤버 변수 모두 만들어지는 클래스 각각에 따라 따로 관리됨
+
+template <typename T>
+class MyClass
+{
+  static T member;
+}
+
+template <typename T>
+T MyClass<T>::member = 0;
+
+=> MyClass<int>의 member와 MyClass<double> 의 멤버는 따로 관리된다는 말이다.
+
+또한 템플릿 static 멤버 변수 초기화의 특수화도 다음과 같은 형태로 가능하다
+
+template <>
+long MyClass<T>::member = 13532;
+
+
+```
+
+
+- 템플릿을 분리할 경우 헤더 파일만을 참조할 때는 실제 그 클래스 / 함수의 정의를 알 수 없기 때문에 링크 에러가 발생
+  - => 템플릿 함수의 선언과 정의를 헤더 파일에 한번에 구현하거나 / template을 참조하는 쪽에서 실제 헤더 파일 + 정의가 구현된 cpp파일까지 include해야한다.
+
